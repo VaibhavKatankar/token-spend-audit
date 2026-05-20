@@ -135,7 +135,7 @@ export default function SpendForm() {
   };
 
   return (
-    <div className="w-full max-w-3xl mx-auto bg-card border border-border/80 rounded-2xl shadow-2xl overflow-hidden">
+    <div className="w-full max-w-3xl mx-auto bg-card/85 backdrop-blur-md border border-border/80 rounded-2xl shadow-2xl overflow-hidden glow-card">
       {/* Wizard Header Bar */}
       <div className="border-b border-border bg-muted/40 px-6 py-4 flex items-center justify-between">
         <div className="flex items-center space-x-2">

@@ -1,5 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { AuditReportDb, SpendInput, AuditResults } from "@/types";
+import fs from "fs";
+import path from "path";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
@@ -11,12 +13,30 @@ export const supabase = isSupabaseConfigured
   ? createClient(supabaseUrl, supabaseAnonKey)
   : null;
 
-// Server-side / Memory-side fallback storage to enable full features without Supabase keys
-const mockAuditsCache = new Map<string, AuditReportDb>();
-const mockLeadsCache: any[] = [];
+// Paths for local JSON database fallbacks (running in server environment)
+const dataDir = path.join(process.cwd(), "src/data");
+const auditsFilePath = path.join(dataDir, "audits.json");
+const leadsFilePath = path.join(dataDir, "leads.json");
+
+// Helper to ensure filesystem storage exists
+function ensureStorage() {
+  try {
+    if (!fs.existsSync(dataDir)) {
+      fs.mkdirSync(dataDir, { recursive: true });
+    }
+    if (!fs.existsSync(auditsFilePath)) {
+      fs.writeFileSync(auditsFilePath, JSON.stringify({}), "utf-8");
+    }
+    if (!fs.existsSync(leadsFilePath)) {
+      fs.writeFileSync(leadsFilePath, JSON.stringify([]), "utf-8");
+    }
+  } catch (err) {
+    console.error("Local JSON database initialization failed:", err);
+  }
+}
 
 /**
- * Persists audit results to Supabase (or fallback storage if keys are absent).
+ * Persists audit results to Supabase (or fallback JSON storage if keys are absent).
  */
 export async function dbSaveAudit(
   teamName: string,
@@ -61,21 +81,19 @@ export async function dbSaveAudit(
       if (error) throw error;
       return data.id;
     } catch (err) {
-      console.error("Supabase write failed, falling back to local memory store:", err);
+      console.error("Supabase write failed, falling back to local storage file:", err);
     }
   }
 
-  // Fallback to local memory / localstorage cache
-  mockAuditsCache.set(auditId, auditRecord);
-  if (typeof window !== "undefined") {
-    try {
-      const localStore = localStorage.getItem("token_spend_audits") || "{}";
-      const audits = JSON.parse(localStore);
-      audits[auditId] = auditRecord;
-      localStorage.setItem("token_spend_audits", JSON.stringify(audits));
-    } catch (e) {
-      console.warn("localStorage write failed:", e);
-    }
+  // Fallback to local file-based JSON storage
+  ensureStorage();
+  try {
+    const fileData = fs.readFileSync(auditsFilePath, "utf-8") || "{}";
+    const audits = JSON.parse(fileData);
+    audits[auditId] = auditRecord;
+    fs.writeFileSync(auditsFilePath, JSON.stringify(audits, null, 2), "utf-8");
+  } catch (e) {
+    console.warn("JSON file write failed for audit:", e);
   }
 
   return auditId;
@@ -94,30 +112,25 @@ export async function dbGetAudit(id: string): Promise<AuditReportDb | null> {
         .single();
 
       if (error) {
-        // Fall back to memory lookup if not found in Postgres
-        console.warn("Could not find record in Supabase, checking memory caches.");
+        console.warn("Could not find record in Supabase, checking local JSON storage.");
       } else {
         return data as AuditReportDb;
       }
     } catch (err) {
-      console.error("Supabase fetch failed, looking up fallback caches:", err);
+      console.error("Supabase fetch failed, looking up local fallback files:", err);
     }
   }
 
-  // Look in Memory cache
-  if (mockAuditsCache.has(id)) {
-    return mockAuditsCache.get(id) || null;
-  }
-
-  // Look in LocalStorage
-  if (typeof window !== "undefined") {
-    try {
-      const localStore = localStorage.getItem("token_spend_audits") || "{}";
-      const audits = JSON.parse(localStore);
+  // Look in local JSON database
+  ensureStorage();
+  try {
+    if (fs.existsSync(auditsFilePath)) {
+      const fileData = fs.readFileSync(auditsFilePath, "utf-8") || "{}";
+      const audits = JSON.parse(fileData);
       if (audits[id]) return audits[id];
-    } catch (e) {
-      console.warn("localStorage lookup failed:", e);
     }
+  } catch (e) {
+    console.warn("Local JSON database lookup failed:", e);
   }
 
   return null;
@@ -156,22 +169,22 @@ export async function dbSaveLead(
       if (error) throw error;
       return true;
     } catch (err) {
-      console.error("Supabase lead write failed, falling back to local memory:", err);
+      console.error("Supabase lead write failed, falling back to local files:", err);
     }
   }
 
-  // Fallback to memory
-  mockLeadsCache.push(leadRecord);
-  if (typeof window !== "undefined") {
-    try {
-      const localStore = localStorage.getItem("token_spend_leads") || "[]";
-      const leads = JSON.parse(localStore);
-      leads.push(leadRecord);
-      localStorage.setItem("token_spend_leads", JSON.stringify(leads));
-    } catch (e) {
-      console.warn("localStorage write failed for leads:", e);
-    }
+  // Fallback to JSON list file
+  ensureStorage();
+  try {
+    const fileData = fs.readFileSync(leadsFilePath, "utf-8") || "[]";
+    const leads = JSON.parse(fileData);
+    leads.push(leadRecord);
+    fs.writeFileSync(leadsFilePath, JSON.stringify(leads, null, 2), "utf-8");
+    return true;
+  } catch (e) {
+    console.warn("JSON file write failed for lead:", e);
   }
 
   return true;
 }
+

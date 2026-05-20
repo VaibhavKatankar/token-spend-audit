@@ -144,7 +144,7 @@ export default async function ReportPage({ params }: PageProps) {
   });
 
   return (
-    <div className="min-h-screen bg-background text-white flex flex-col selection:bg-primary/30">
+    <div className="min-h-screen bg-background text-white flex flex-col selection:bg-primary/30 bg-grid-pattern relative">
       <Header />
 
       <main className="flex-grow max-w-5xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12 space-y-8">
@@ -170,7 +170,7 @@ export default async function ReportPage({ params }: PageProps) {
         </div>
 
         {/* Audit Header Banner */}
-        <div className="border border-border/80 bg-card/30 rounded-2xl p-6 md:p-8 space-y-4">
+        <div className="border border-border/80 bg-card/40 backdrop-blur-md rounded-2xl p-6 md:p-8 space-y-4 glow-card animate-fade-in">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="space-y-1">
               <span className="text-xs font-bold text-primary uppercase tracking-widest">
@@ -203,7 +203,7 @@ export default async function ReportPage({ params }: PageProps) {
         />
 
         {/* AI Analysis Summary Box */}
-        <div className="relative border border-border bg-card/25 rounded-2xl p-6 md:p-8">
+        <div className="relative border border-border/80 bg-card/45 backdrop-blur-md rounded-2xl p-6 md:p-8 glow-card animate-fade-in">
           <div className="absolute right-4 top-4 inline-flex items-center space-x-1.5 bg-primary/10 border border-primary/20 px-2 py-0.5 rounded text-[10px] font-bold text-primary uppercase">
             <Sparkles className="h-3 w-3" />
             <span>AI Insights</span>
@@ -226,7 +226,7 @@ export default async function ReportPage({ params }: PageProps) {
           </div>
 
           {savings_metrics.recommendations.length === 0 ? (
-            <div className="border border-dashed border-border rounded-xl p-10 text-center text-muted-foreground text-sm">
+            <div className="border border-dashed border-border rounded-xl p-10 text-center text-muted-foreground text-sm animate-fade-in">
               Your stack is 100% efficient! No spend anomalies or redundant licenses detected.
             </div>
           ) : (
@@ -236,8 +236,8 @@ export default async function ReportPage({ params }: PageProps) {
                 return (
                   <div 
                     key={rec.id} 
-                    className={`border rounded-xl p-5 md:p-6 bg-card/45 relative flex flex-col md:flex-row items-start justify-between gap-6 transition-all hover:bg-card/75 ${
-                      isHigh ? "border-rose-500/20 shadow-lg shadow-rose-950/5" : "border-border/80"
+                    className={`border rounded-xl p-5 md:p-6 bg-card/45 relative flex flex-col md:flex-row items-start justify-between gap-6 transition-all glow-card hover:bg-card/75 animate-fade-in ${
+                      isHigh ? "border-rose-500/20" : "border-border/80"
                     }`}
                   >
                     <div className="flex items-start space-x-4">

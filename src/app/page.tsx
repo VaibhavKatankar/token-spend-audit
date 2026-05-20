@@ -15,16 +15,16 @@ export default function LandingPage() {
   const estSavingsYr = estSavingsMo * 12;
 
   return (
-    <div className="min-h-screen bg-background text-white flex flex-col selection:bg-primary/30">
+    <div className="min-h-screen bg-background text-white flex flex-col selection:bg-primary/30 bg-grid-pattern relative">
       <Header />
 
       {/* Hero Section */}
       <section className="relative pt-20 pb-16 md:pt-32 md:pb-24 overflow-hidden border-b border-border/40">
         <div className="absolute inset-0 z-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/10 via-transparent to-transparent pointer-events-none" />
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center space-y-6">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center space-y-6 animate-fade-in">
           {/* Status Badge */}
-          <div className="inline-flex items-center space-x-2 bg-primary/10 border border-primary/25 px-3 py-1 rounded-full text-xs font-semibold text-primary animate-fade-in">
+          <div className="inline-flex items-center space-x-2 bg-primary/10 border border-primary/25 px-3 py-1 rounded-full text-xs font-semibold text-primary">
             <Sparkles className="h-3.5 w-3.5" />
             <span>Audit Stack in under 2 minutes</span>
           </div>
@@ -60,9 +60,9 @@ export default function LandingPage() {
       </section>
 
       {/* Interactive Estimator Widget */}
-      <section id="estimator" className="py-16 bg-muted/20 border-b border-border/40">
+      <section id="estimator" className="py-16 bg-muted/10 border-b border-border/40">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="bg-card border border-border rounded-2xl p-6 md:p-8 shadow-2xl relative">
+          <div className="bg-card/80 backdrop-blur-md border border-border rounded-2xl p-6 md:p-8 shadow-2xl relative glow-card">
             <div className="absolute -left-12 -top-12 h-24 w-24 rounded-full bg-primary/10 blur-2xl pointer-events-none" />
             
             <div className="text-center space-y-2 mb-8">
@@ -92,7 +92,7 @@ export default function LandingPage() {
 
               {/* Outputs */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
-                <div className="bg-background border border-border/80 rounded-xl p-4 flex flex-col items-center justify-center text-center">
+                <div className="bg-background/90 border border-border/80 rounded-xl p-4 flex flex-col items-center justify-center text-center">
                   <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider mb-1">
                     Estimated Monthly Savings
                   </span>
@@ -101,7 +101,7 @@ export default function LandingPage() {
                   </span>
                 </div>
 
-                <div className="bg-background border border-border/80 rounded-xl p-4 flex flex-col items-center justify-center text-center">
+                <div className="bg-background/90 border border-border/80 rounded-xl p-4 flex flex-col items-center justify-center text-center">
                   <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider mb-1">
                     Projected Annual Recovery
                   </span>
@@ -133,7 +133,7 @@ export default function LandingPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Card 1: Token costs */}
-          <div className="bg-card/50 border border-border/80 rounded-xl p-6 space-y-4 hover:border-primary/45 transition-colors">
+          <div className="bg-card/60 backdrop-blur-sm border border-border/80 rounded-xl p-6 space-y-4 glow-card">
             <div className="h-10 w-10 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center text-primary">
               <Terminal className="h-5 w-5" />
             </div>
@@ -144,7 +144,7 @@ export default function LandingPage() {
           </div>
 
           {/* Card 2: Seat overlaps */}
-          <div className="bg-card/50 border border-border/80 rounded-xl p-6 space-y-4 hover:border-primary/45 transition-colors">
+          <div className="bg-card/60 backdrop-blur-sm border border-border/80 rounded-xl p-6 space-y-4 glow-card">
             <div className="h-10 w-10 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400">
               <Users className="h-5 w-5" />
             </div>
@@ -155,7 +155,7 @@ export default function LandingPage() {
           </div>
 
           {/* Card 3: Idle Compute */}
-          <div className="bg-card/50 border border-border/80 rounded-xl p-6 space-y-4 hover:border-primary/45 transition-colors">
+          <div className="bg-card/60 backdrop-blur-sm border border-border/80 rounded-xl p-6 space-y-4 glow-card">
             <div className="h-10 w-10 rounded-lg bg-indigo-800/10 border border-indigo-800/20 flex items-center justify-center text-indigo-500">
               <Cpu className="h-5 w-5" />
             </div>
