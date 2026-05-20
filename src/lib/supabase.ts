@@ -13,10 +13,17 @@ export const supabase = isSupabaseConfigured
   ? createClient(supabaseUrl, supabaseAnonKey)
   : null;
 
-// Paths for local JSON database fallbacks (running in server environment)
-const dataDir = path.join(process.cwd(), "src/data");
+// Determine path for local JSON database fallbacks
+// In Vercel serverless environments, the root is read-only, so we must write to '/tmp'
+const isVercel = process.env.VERCEL === "1" || !!process.env.VERCEL;
+const dataDir = isVercel ? "/tmp" : path.join(process.cwd(), "src/data");
 const auditsFilePath = path.join(dataDir, "audits.json");
 const leadsFilePath = path.join(dataDir, "leads.json");
+
+// Multi-tier global in-memory backup cache to prevent any EROFS write failures from breaking the app
+const globalCache = global as any;
+globalCache._audits = globalCache._audits || {};
+globalCache._leads = globalCache._leads || [];
 
 // Helper to ensure filesystem storage exists
 function ensureStorage() {
@@ -31,12 +38,12 @@ function ensureStorage() {
       fs.writeFileSync(leadsFilePath, JSON.stringify([]), "utf-8");
     }
   } catch (err) {
-    console.error("Local JSON database initialization failed:", err);
+    console.warn("Local JSON database directory initialization skipped or read-only:", err);
   }
 }
 
 /**
- * Persists audit results to Supabase (or fallback JSON storage if keys are absent).
+ * Persists audit results to Supabase (or fallback JSON/Memory storage).
  */
 export async function dbSaveAudit(
   teamName: string,
@@ -85,15 +92,25 @@ export async function dbSaveAudit(
     }
   }
 
+  // Backup: Keep in global memory cache
+  globalCache._audits[auditId] = auditRecord;
+
   // Fallback to local file-based JSON storage
   ensureStorage();
   try {
-    const fileData = fs.readFileSync(auditsFilePath, "utf-8") || "{}";
-    const audits = JSON.parse(fileData);
-    audits[auditId] = auditRecord;
-    fs.writeFileSync(auditsFilePath, JSON.stringify(audits, null, 2), "utf-8");
+    if (fs.existsSync(dataDir)) {
+      let fileData = "{}";
+      try {
+        fileData = fs.readFileSync(auditsFilePath, "utf-8") || "{}";
+      } catch (e) {
+        // file doesn't exist yet, we will create it
+      }
+      const audits = JSON.parse(fileData);
+      audits[auditId] = auditRecord;
+      fs.writeFileSync(auditsFilePath, JSON.stringify(audits, null, 2), "utf-8");
+    }
   } catch (e) {
-    console.warn("JSON file write failed for audit:", e);
+    console.warn("JSON file write failed for audit (using memory cache):", e);
   }
 
   return auditId;
@@ -121,7 +138,12 @@ export async function dbGetAudit(id: string): Promise<AuditReportDb | null> {
     }
   }
 
-  // Look in local JSON database
+  // 1. Check in global memory cache
+  if (globalCache._audits[id]) {
+    return globalCache._audits[id];
+  }
+
+  // 2. Check in local JSON database
   ensureStorage();
   try {
     if (fs.existsSync(auditsFilePath)) {
@@ -173,18 +195,28 @@ export async function dbSaveLead(
     }
   }
 
+  // Backup: Keep in global memory cache
+  globalCache._leads.push(leadRecord);
+
   // Fallback to JSON list file
   ensureStorage();
   try {
-    const fileData = fs.readFileSync(leadsFilePath, "utf-8") || "[]";
-    const leads = JSON.parse(fileData);
-    leads.push(leadRecord);
-    fs.writeFileSync(leadsFilePath, JSON.stringify(leads, null, 2), "utf-8");
-    return true;
+    if (fs.existsSync(dataDir)) {
+      let fileData = "[]";
+      try {
+        fileData = fs.readFileSync(leadsFilePath, "utf-8") || "[]";
+      } catch (e) {
+        // file doesn't exist yet, we will create it
+      }
+      const leads = JSON.parse(fileData);
+      leads.push(leadRecord);
+      fs.writeFileSync(leadsFilePath, JSON.stringify(leads, null, 2), "utf-8");
+    }
   } catch (e) {
-    console.warn("JSON file write failed for lead:", e);
+    console.warn("JSON file write failed for lead (using memory cache):", e);
   }
 
   return true;
 }
+
 
